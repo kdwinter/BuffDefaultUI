@@ -27,7 +27,8 @@ local GLOBAL_DEFAULTS = {
   VendorGreys       = true,
   ClassColorHealth  = true,
   ClassIconPortrait = true,
-  HideGryphons      = false
+  HideGryphons      = false,
+  MimicDBMPull      = true
 }
 
 local CHARACTER_DEFAULTS = {
@@ -344,6 +345,21 @@ local function RegisterCombatNotifications()
   f:SetScript("OnEvent", NotifyCombatChange)
 end
 
+local function RegisterDBMPullTimer()
+  -- Only receive CHAT_MSG_ADDON events that are registered. D4 is DBM's prefix.
+  RegisterAddonMessagePrefix("D4")
+
+  local function SubscribeToPullEvent(self, event, prefix, message, type, sender)
+    if BDUI_GlobalSettings.MimicDBMPull then
+      DEFAULT_CHAT_FRAME:AddMessage("AddonMessage ["..prefix.."]: "..message)
+    end
+  end
+
+  local f = CreateFrame("Frame")
+  f:RegisterEvent("CHAT_MSG_ADDON")
+  f:SetScript("OnEvent", SubscribeToPullEvent)
+end
+
 local function DarkenArt()
   for i, v in pairs({
     PlayerFrameTexture, TargetFrameTextureFrameTexture, PetFrameTexture,
@@ -398,6 +414,7 @@ function CreateOptionsPanel()
   local AutoRepairCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelAutoRepair", OptionsPanel, "OptionsCheckButtonTemplate")
   local UseGuildRepairCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelUseGuildRepair", OptionsPanel, "OptionsCheckButtonTemplate")
   local VendorGreysCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelVendorGreys", OptionsPanel, "OptionsCheckButtonTemplate")
+  local MimicDBMCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelMimicDBM", OptionsPanel, "OptionsCheckButtonTemplate")
   local OptionsPanelUFTitle = OptionsPanel:CreateFontString(nil, "ARTWORK", "GameFontNormalLeft")
   local ClassColorHealthCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelClassColorHealth", OptionsPanel, "OptionsCheckButtonTemplate")
   local ClassIconPortraitCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelClassIconPortrait", OptionsPanel, "OptionsCheckButtonTemplate")
@@ -440,8 +457,15 @@ function CreateOptionsPanel()
     BDUI_GlobalSettings.VendorGreys = self:GetChecked()
   end)
 
+  _G[ADDON_NAME.."OptionsPanelMimicDBMText"]:SetText("Subscribe to DBM's pull timer and display it in chat instead")
+  MimicDBMCheckbox:SetChecked(BDUI_GlobalSettings.MimicDBMPull)
+  MimicDBMCheckbox:SetPoint("TOPLEFT", VendorGreysCheckbox, "BOTTOMLEFT", 0, 0)
+  MimicDBMCheckbox:SetScript("OnClick", function(self)
+    BDUI_GlobalSettings.MimicDBMPull = self:GetChecked()
+  end)
+
   OptionsPanelUFTitle:SetText("|cffffffffFrames")
-  OptionsPanelUFTitle:SetPoint("TOPLEFT", VendorGreysCheckbox, "BOTTOMLEFT", 0, -24)
+  OptionsPanelUFTitle:SetPoint("TOPLEFT", MimicDBMCheckbox, "BOTTOMLEFT", 0, -24)
 
   _G[ADDON_NAME.."OptionsPanelClassColorHealthText"]:SetText("Use class colors in healthbars")
   ClassColorHealthCheckbox:SetChecked(BDUI_GlobalSettings.ClassColorHealth)
@@ -510,6 +534,7 @@ local function Init(self, event)
     RegisterAutoRepairEvents()
     RegisterChatImprovements()
     RegisterCombatNotifications()
+    RegisterDBMPullTimer()
     DarkenArt()
 
     DEFAULT_CHAT_FRAME:AddMessage("BuffDefaultUI loaded", 0, 100, 255)
