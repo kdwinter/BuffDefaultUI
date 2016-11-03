@@ -1,0 +1,9 @@
+## Interface: 70000
+## Author: Gigamo
+## Version: 1.0.0
+## Title: BuffDefaultUI
+## Notes: Rescales the default UI and stuff
+## SavedVariables: BDUI_GlobalSettings
+## SavedVariablesPerCharacter: BDUI_CharacterSettings
+
+core.lua
