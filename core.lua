@@ -55,6 +55,8 @@ local CHAT_EVENTS = {
   "CHAT_MSG_INSTANCE_CHAT_LEADER"
 }
 
+local DBM_ADDONMESSAGE_PREFIX = "D4"
+
 -----------------------------------------------------------------------------
 -- Functions                                                               --
 -----------------------------------------------------------------------------
@@ -206,7 +208,7 @@ local function LoadSettings()
     BDUI_CharacterSettings = {}
   end
 
-  local function copyDefaults(src, dst)
+  local function CopyDefaults(src, dst)
     if type(src) ~= "table" then
       return {}
     end
@@ -216,7 +218,7 @@ local function LoadSettings()
 
     for k, v in pairs(src) do
       if type(v) == "table" then
-        dst[k] = copyDefaults(v, dst[k])
+        dst[k] = CopyDefaults(v, dst[k])
       elseif type(v) ~= type(dst[k]) then
         dst[k] = v
       end
@@ -225,8 +227,8 @@ local function LoadSettings()
     return dst
   end
 
-  copyDefaults(GLOBAL_DEFAULTS,    BDUI_GlobalSettings)
-  copyDefaults(CHARACTER_DEFAULTS, BDUI_CharacterSettings)
+  CopyDefaults(GLOBAL_DEFAULTS,    BDUI_GlobalSettings)
+  CopyDefaults(CHARACTER_DEFAULTS, BDUI_CharacterSettings)
 end
 
 local function RegisterChatImprovements()
@@ -346,12 +348,35 @@ local function RegisterCombatNotifications()
 end
 
 local function RegisterDBMPullTimer()
-  -- Only receive CHAT_MSG_ADDON events that are registered. D4 is DBM's prefix.
+  UIErrorsFrame:Show()
+  -- Only receives CHAT_MSG_ADDON events that are registered. D4 is DBM's prefix.
   RegisterAddonMessagePrefix("D4")
 
+  local secondsUntilPull = nil
+  local lastInstanceId = nil
+  local oneSecond = 1
+  local countdownFrame = CreateFrame("Frame", "CnD")
+  countdownFrame:Hide()
+  countdownFrame:SetScript("OnUpdate", function(self, elapsed)
+    oneSecond = oneSecond + elapsed
+    if oneSecond > 1 then
+      oneSecond = 0
+      UIErrorsFrame:AddMessage(secondsUntilPull > 0 and "Pull in "..secondsUntilPull or "Pull NOW!", 0, 150, 255, 3)
+      secondsUntilPull = secondsUntilPull - 1
+      if secondsUntilPull < 0 then
+        self:Hide()
+      end
+    end
+  end)
+
   local function SubscribeToPullEvent(self, event, prefix, message, type, sender)
-    if BDUI_GlobalSettings.MimicDBMPull then
-      DEFAULT_CHAT_FRAME:AddMessage("AddonMessage ["..prefix.."]: "..message)
+    if BDUI_GlobalSettings.MimicDBMPull and prefix == DBM_ADDONMESSAGE_PREFIX and message:match("^PT") then
+      --_G["ChatFrame1EditBox"]:SetText(message)
+      secondsUntilPull, lastInstanceId = message:match("^PT\t(%d+)\t(%d+)")
+      DEFAULT_CHAT_FRAME:AddMessage("DBM pull timer started ("..secondsUntilPull.." seconds)")
+      secondsUntilPull = tonumber(secondsUntilPull)
+      oneSecond = 1
+      countdownFrame:Show()
     end
   end
 
@@ -379,7 +404,7 @@ local function DarkenArt()
     v:SetVertexColor(.4, .4, .4)
   end
 
-  for i,v in pairs({select(2, TimeManagerClockButton:GetRegions())}) do
+  for i, v in pairs({select(2, TimeManagerClockButton:GetRegions())}) do
     v:SetVertexColor(1, 1, 1)
   end
   for i, v in pairs({MainMenuBarLeftEndCap, MainMenuBarRightEndCap}) do
@@ -537,7 +562,7 @@ local function Init(self, event)
     RegisterDBMPullTimer()
     DarkenArt()
 
-    DEFAULT_CHAT_FRAME:AddMessage("BuffDefaultUI loaded", 0, 100, 255)
+    DEFAULT_CHAT_FRAME:AddMessage("BuffDefaultUI loaded")
   end
 end
 
@@ -556,7 +581,7 @@ SlashCmdList["BDUI_HELP"] = function(message, editbox)
     BDUI_GlobalSettings    = GLOBAL_DEFAULTS
     BDUI_CharacterSettings = CHARACTER_DEFAULTS
     MoveAndScaleFrames()
-    DEFAULT_CHAT_FRAME:AddMessage("BuffDefaultUI: Settings have been reset to defaults", 255, 255, 0)
+    DEFAULT_CHAT_FRAME:AddMessage("BuffDefaultUI settings have been reset to their defaults", 255, 255, 0)
   elseif message == "status" then
     DEFAULT_CHAT_FRAME:AddMessage("BuffDefaultUI Settings:", 255, 255, 0)
     for k, v in pairs(BDUI_GlobalSettings) do
