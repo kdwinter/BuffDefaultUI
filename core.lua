@@ -55,8 +55,6 @@ local CHAT_EVENTS = {
   "CHAT_MSG_INSTANCE_CHAT_LEADER"
 }
 
-local DBM_ADDONMESSAGE_PREFIX = "D4"
-
 -----------------------------------------------------------------------------
 -- Functions                                                               --
 -----------------------------------------------------------------------------
@@ -361,6 +359,7 @@ local function RegisterDBMPullTimer()
     oneSecond = oneSecond + elapsed
     if oneSecond > 1 then
       oneSecond = 0
+      PlaySound("RaidWarning")
       UIErrorsFrame:AddMessage(secondsUntilPull > 0 and "Pull in "..secondsUntilPull or "Pull NOW!", 0, 150, 255, 3)
       secondsUntilPull = secondsUntilPull - 1
       if secondsUntilPull < 0 then
@@ -370,12 +369,13 @@ local function RegisterDBMPullTimer()
   end)
 
   local function SubscribeToPullEvent(self, event, prefix, message, type, sender)
-    if BDUI_GlobalSettings.MimicDBMPull and prefix == DBM_ADDONMESSAGE_PREFIX and message:match("^PT") then
+    if BDUI_GlobalSettings.MimicDBMPull and prefix == "D4" and message:match("^PT") then
       --_G["ChatFrame1EditBox"]:SetText(message)
       secondsUntilPull, lastInstanceId = message:match("^PT\t(%d+)\t(%d+)")
       DEFAULT_CHAT_FRAME:AddMessage("DBM pull timer started ("..secondsUntilPull.." seconds)")
       secondsUntilPull = tonumber(secondsUntilPull)
       oneSecond = 1
+      PlaySound("ReadyCheck")
       countdownFrame:Show()
     end
   end
