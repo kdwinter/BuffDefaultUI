@@ -182,7 +182,7 @@ end
 local function RegisterPlayerFrameClassIcon()
   hooksecurefunc("UnitFramePortrait_Update", function(self)
     if BDUI_GlobalSettings.ClassIconPortrait and self.portrait then
-      if UnitIsPlayer(self.unit) then                
+      if UnitIsPlayer(self.unit) then
         local t = CLASS_ICON_TCOORDS[select(2, UnitClass(self.unit))]
         if t then
           self.portrait:SetTexture([[Interface\TargetingFrame\UI-Classes-Circles]])
@@ -255,7 +255,7 @@ local function RegisterChatImprovements()
     end
     if not foundUrl then
       msg2 = msg:gsub("(%s?)([%w_-]+%.?[%w_-]+%.[%w_-]+:%d%d%d?%d?%d?)(%s?)", function(before, url, after)
-        foundUrl = true 
+        foundUrl = true
         return before..FormatUrl(url)..after
       end)
     end
@@ -354,14 +354,19 @@ local function RegisterDBMPullTimer()
   local lastInstanceId = nil
   local oneSecond = 1
   local countdownFrame = CreateFrame("Frame", "CnD")
+
   countdownFrame:Hide()
   countdownFrame:SetScript("OnUpdate", function(self, elapsed)
     oneSecond = oneSecond + elapsed
+
     if oneSecond > 1 then
       oneSecond = 0
+
       PlaySound("RaidWarning")
       UIErrorsFrame:AddMessage(secondsUntilPull > 0 and "Pull in "..secondsUntilPull or "Pull NOW!", 0, 150, 255, 3)
+
       secondsUntilPull = secondsUntilPull - 1
+
       if secondsUntilPull < 0 then
         self:Hide()
       end
@@ -372,9 +377,12 @@ local function RegisterDBMPullTimer()
     if BDUI_GlobalSettings.MimicDBMPull and prefix == "D4" and message:match("^PT") then
       --_G["ChatFrame1EditBox"]:SetText(message)
       secondsUntilPull, lastInstanceId = message:match("^PT\t(%d+)\t(%d+)")
+
       DEFAULT_CHAT_FRAME:AddMessage("DBM pull timer started ("..secondsUntilPull.." seconds)")
+
       secondsUntilPull = tonumber(secondsUntilPull)
       oneSecond = 1
+
       PlaySound("ReadyCheck")
       countdownFrame:Show()
     end
@@ -571,9 +579,9 @@ f:RegisterEvent("PLAYER_LOGIN")
 f:RegisterEvent("ADDON_LOADED")
 f:SetScript("OnEvent", Init)
 
------------------------------------------------------------------------------
--- Chat commands                                                           --
------------------------------------------------------------------------------
+----------------------------------------------------------------------------
+-- Chat commands                                                          --
+----------------------------------------------------------------------------
 
 --function SlashCmdList.BDUI_HELP(message, editbox)
 SlashCmdList["BDUI_HELP"] = function(message, editbox)
