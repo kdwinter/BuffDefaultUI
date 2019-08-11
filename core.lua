@@ -241,7 +241,8 @@ local function RegisterPlayerFrameClassIcon()
 
     for _, klass in pairs(CLASS_NAMES) do
         TargetClassIcons[klass] = TargetClassIcons:CreateTexture(nil, "BORDER")
-        TargetClassIcons[klass]:SetTexture("Interface\\AddOns\\BuffDefaultUI\\class_icons\\Class_"..klass)
+        local texture = "Interface\\AddOns\\BuffDefaultUI\\class_icons\\Class_"..klass:gsub("%w", string.lower):gsub("^%l", string.upper)
+        TargetClassIcons[klass]:SetTexture(texture)
         TargetClassIcons[klass]:SetWidth(64)
         TargetClassIcons[klass]:SetHeight(64)
         TargetClassIcons[klass]:SetPoint("TOPRIGHT", TargetFrame, -42, -12)
@@ -252,16 +253,15 @@ local function RegisterPlayerFrameClassIcon()
         for _, klass in pairs(CLASS_NAMES) do
             TargetClassIcons[klass]:Hide()
         end
-        TargetFramePortrait:SetWidth(64)
-        TargetFramePortrait:SetHeight(64)
+        TargetFramePortrait:Show()
 
         if BDUI_GlobalSettings.ClassIconPortrait and self.portrait then
             if UnitIsPlayer(self.unit) then
+                --print(select(2, UnitClass(self.unit)))
                 local icon = TargetClassIcons[select(2, UnitClass(self.unit))]
                 if icon then
                     icon:Show()
-                    TargetFramePortrait:SetWidth(0.01)
-                    TargetFramePortrait:SetHeight(0.01)
+                    TargetFramePortrait:Hide()
                 end
                 --local t = CLASS_ICON_TCOORDS[select(2, UnitClass(self.unit))]
                 --if t then
