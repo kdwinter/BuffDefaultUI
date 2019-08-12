@@ -10,6 +10,10 @@ local FRAME_POSITIONS = {
         PLAYER = {X = -400, Y = 400},
         TARGET = {X = -130, Y = 400},
         PARTY  = {X = -700, Y = 400}
+        -- Better for 1080p:
+        --PLAYER = {X = -450, Y = 300},
+        --TARGET = {X = -180, Y = 300},
+        --PARTY  = {X = -700, Y = 400}
     },
     MID = {
         PLAYER = {X = -200, Y = -220},
@@ -64,6 +68,10 @@ local CLASS_NAMES = {
     "WARLOCK",
     "WARRIOR"
 }
+
+local MANA_COLOR   = {0,       100/255, 240/255}
+local RAGE_COLOR   = {256/255,  30/255,   0/255}
+local ENERGY_COLOR = {255/255, 245/255, 105/255}
 
 -----------------------------------------------------------------------------
 -- Functions                                                               --
@@ -421,20 +429,36 @@ local function RegisterMiddleBars()
         bar:SetBackdropColor(0, 0, 0, 0.7)
 
         local fill = bar:GetStatusBarTexture()
+
         if i == 1 then
             bar:SetPoint("CENTER", 0, -190)
             bar:SetSize(160, 10)
+
             fill:SetVertexColor(0, 255/255, 0)
         else
             bar:SetPoint("CENTER", 0, -199)
             bar:SetSize(160, 8)
-            if select(2, UnitClass("player")) == "WARRIOR" then
-                fill:SetVertexColor(256/255, 30/255, 0/255)
-            elseif select(2, UnitClass("player")) == "ROGUE" then
-                fill:SetVertexColor(255/255, 245/255, 105/255)
+
+            local klass = select(2, UnitClass("player"))
+            local color
+
+            if klass == "WARRIOR" then
+                color = RAGE_COLOR
+            elseif klass == "ROGUE" then
+                color = ENERGY_COLOR
+            elseif klass == "DRUID" then
+                if select(2, GetShapeshiftFormInfo(1)) then
+                    color = RAGE_COLOR
+                elseif select(2, GetShapeshiftFormInfo(3)) then
+                    color = ENERGY_COLOR
+                else
+                    color = MANA_COLOR
+                end
             else
-                fill:SetVertexColor(0, 100/255, 240/255)
+                color = MANA_COLOR
             end
+
+            fill:SetVertexColor(unpack(color))
         end
     end
 
