@@ -236,43 +236,26 @@ local function RegisterAutoRepairEvents()
 end
 
 local function RegisterPlayerFrameClassIcon()
-    TargetClassIcons = CreateFrame("Frame", nil, TargetFrame)
-    TargetClassIcons:SetFrameLevel(TargetFrame:GetFrameLevel())
-
-    for _, klass in pairs(CLASS_NAMES) do
-        TargetClassIcons[klass] = TargetClassIcons:CreateTexture(nil, "BORDER")
-        local texture = "Interface\\AddOns\\BuffDefaultUI\\class_icons\\Class_"..klass:gsub("%w", string.lower):gsub("^%l", string.upper)
-        TargetClassIcons[klass]:SetTexture(texture)
-        TargetClassIcons[klass]:SetWidth(64)
-        TargetClassIcons[klass]:SetHeight(64)
-        TargetClassIcons[klass]:SetPoint("TOPRIGHT", TargetFrame, -42, -12)
-        TargetClassIcons[klass]:Hide()
-    end
-
     hooksecurefunc("UnitFramePortrait_Update", function(self)
-        for _, klass in pairs(CLASS_NAMES) do
-            TargetClassIcons[klass]:Hide()
-        end
-        TargetFramePortrait:Show()
-
-        if BDUI_GlobalSettings.ClassIconPortrait and self.portrait then
-            if UnitIsPlayer(self.unit) then
-                --print(select(2, UnitClass(self.unit)))
-                local icon = TargetClassIcons[select(2, UnitClass(self.unit))]
-                if icon then
-                    icon:Show()
-                    TargetFramePortrait:Hide()
-                end
-                --local t = CLASS_ICON_TCOORDS[select(2, UnitClass(self.unit))]
-                --if t then
-                --    self.portrait:SetTexture([[Interface\TargetingFrame\UI-Classes-Circles]])
-                --    self.portrait:SetTexCoord(unpack(t))
-                --end
-            else
-                --self.portrait:SetTexCoord(0, 1, 0, 1)
+        if BDUI_GlobalSettings.ClassIconPortrait then
+            if self.unit == "player" or self.unit == "pet" then
+                return
             end
-        elseif self.portrait then
-            --self.portrait:SetTexCoord(0, 1, 0, 1)
+
+            if self.portrait then
+                if UnitIsPlayer(self.unit) then
+                    local t = CLASS_ICON_TCOORDS[select(2, UnitClass(self.unit))]
+                    if t then
+                        self.portrait:SetTexture([[Interface\AddOns\BuffDefaultUI\class_icons\UI-Classes-Circles]])
+                        --self.portrait:SetTexture([[Interface\TargetingFrame\UI-Classes-Circles]])
+                        self.portrait:SetTexCoord(unpack(t))
+                    else
+                        self.portrait:SetTexCoord(0, 1, 0, 1)
+                    end
+                else
+                    self.portrait:SetTexCoord(0, 1, 0, 1)
+                end
+            end
         end
     end)
 end
@@ -432,8 +415,6 @@ local function RegisterMiddleBars()
     for i, bar in pairs({MiddleHealthBar, MiddlePowerBar}) do
         bar:SetMovable(false)
         bar:EnableMouse(false)
-        bar:SetPoint("CENTER", 0, -180-(i*10))
-        bar:SetSize(160, 10)
         bar:SetBackdrop({bgFile = [[Interface\DialogFrame\UI-DialogBox-Background-Dark]]})
         bar:SetStatusBarTexture([[Interface\AddOns\BuffDefaultUI\bar_textures\Cupence]])
         bar:SetOrientation("HORIZONTAL")
@@ -441,8 +422,12 @@ local function RegisterMiddleBars()
 
         local fill = bar:GetStatusBarTexture()
         if i == 1 then
+            bar:SetPoint("CENTER", 0, -190)
+            bar:SetSize(160, 10)
             fill:SetVertexColor(0, 255/255, 0)
         else
+            bar:SetPoint("CENTER", 0, -199)
+            bar:SetSize(160, 8)
             fill:SetVertexColor(0, 100/255, 240/255)
         end
     end
