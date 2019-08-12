@@ -447,13 +447,14 @@ local function RegisterMiddleBars()
             elseif klass == "ROGUE" then
                 color = ENERGY_COLOR
             elseif klass == "DRUID" then
-                if select(2, GetShapeshiftFormInfo(1)) then
-                    color = RAGE_COLOR
-                elseif select(2, GetShapeshiftFormInfo(3)) then
-                    color = ENERGY_COLOR
-                else
+                -- TODO: Update on druid form change events
+                --if select(2, GetShapeshiftFormInfo(1)) then
+                --    color = RAGE_COLOR
+                --elseif select(2, GetShapeshiftFormInfo(3)) then
+                --    color = ENERGY_COLOR
+                --else
                     color = MANA_COLOR
-                end
+                --end
             else
                 color = MANA_COLOR
             end
