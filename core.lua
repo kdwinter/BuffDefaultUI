@@ -489,6 +489,85 @@ local function ToggleMiddleBars()
     end
 end
 
+local function RegisterEnemyStatusDisplay()
+    PlayerFrameHealthBarText:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+    PlayerFrameHealthBarTextLeft:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+    PlayerFrameHealthBarTextRight:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+    PlayerFrameManaBarText:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+    PlayerFrameManaBarTextLeft:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+    PlayerFrameManaBarTextRight:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+
+    local CustomTargetStatusText = CreateFrame("Frame", nil, TargetFrame)
+    CustomTargetStatusText:SetFrameLevel(5)
+
+    for _, v in pairs({"HMiddle", "HLeft", "HRight", "MMiddle", "MLeft", "MRight"}) do
+        CustomTargetStatusText[v] = CustomTargetStatusText:CreateFontString(nil, "OVERLAY")
+        CustomTargetStatusText[v]:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+        CustomTargetStatusText[v]:SetTextColor(1, 1, 1, 1)
+        CustomTargetStatusText[v]:SetJustifyV("CENTER")
+        CustomTargetStatusText[v]:SetJustifyH("CENTER")
+        CustomTargetStatusText[v]:SetText("")
+        CustomTargetStatusText[v]:SetShadowColor(0, 0, 0, 0)
+        CustomTargetStatusText[v]:SetShadowOffset(1, -1)
+    end
+    CustomTargetStatusText.HMiddle:SetPoint("CENTER", TargetFrame, -50, 3)
+    CustomTargetStatusText.HLeft:SetPoint("CENTER", TargetFrame, -93, 3)
+    CustomTargetStatusText.HRight:SetPoint("CENTER", TargetFrame, -4, 3)
+    CustomTargetStatusText.MMiddle:SetPoint("CENTER", TargetFrame, -50, -8)
+    CustomTargetStatusText.MLeft:SetPoint("CENTER", TargetFrame, -93, -8)
+    CustomTargetStatusText.MRight:SetPoint("CENTER", TargetFrame, -4, -8)
+
+    local function UpdateEnemyStatus(self, event)
+        if event == "PLAYER_TARGET_CHANGED" or event == "UNIT_HEALTH" or event == "UNIT_MAXHEALTH" or event == "UNIT_HEALTH_FREQUENT" then
+            if UnitExists("target") and not UnitIsDeadOrGhost("target") and UnitHealth("target") > 0 then
+                if UnitHealthMax("target") > 100 then
+                    CustomTargetStatusText.HMiddle:SetText("")
+                    CustomTargetStatusText.HLeft:SetText(math.ceil(UnitHealth("target") / UnitHealthMax("target")*100).."%")
+                    CustomTargetStatusText.HRight:SetText(UnitHealth("target"))
+                else
+                    CustomTargetStatusText.HMiddle:SetText(math.ceil(UnitHealth("target") / UnitHealthMax("target")*100).."%")
+                    CustomTargetStatusText.HLeft:SetText("")
+                    CustomTargetStatusText.HRight:SetText("")
+                end
+            else
+                CustomTargetStatusText.HMiddle:SetText("")
+                CustomTargetStatusText.HLeft:SetText("")
+                CustomTargetStatusText.HRight:SetText("")
+            end
+        end
+
+        if event == "PLAYER_TARGET_CHANGED" or event == "UNIT_POWER_UPDATE" then
+            if UnitExists("target") and not UnitIsDeadOrGhost("target") and UnitPower("target") > 0 then
+                if UnitPowerType("target") == 0 then
+                    if UnitPowerMax("target") > 100 then
+                        CustomTargetStatusText.MMiddle:SetText("")
+                        CustomTargetStatusText.MLeft:SetText(math.ceil(UnitPower("target") / UnitPowerMax("target")*100).."%")
+                        CustomTargetStatusText.MRight:SetText(UnitPower("target"))
+                    else
+                        CustomTargetStatusText.MMiddle:SetText(math.ceil(UnitPower("target") / UnitPowerMax("target")*100).."%")
+                        CustomTargetStatusText.MLeft:SetText("")
+                        CustomTargetStatusText.MRight:SetText("")
+                    end
+                else
+                    CustomTargetStatusText.MMiddle:SetText(UnitPower("target"))
+                    CustomTargetStatusText.MLeft:SetText("")
+                    CustomTargetStatusText.MRight:SetText("")
+                end
+            else
+                CustomTargetStatusText.MMiddle:SetText("")
+                CustomTargetStatusText.MLeft:SetText("")
+                CustomTargetStatusText.MRight:SetText("")
+            end
+        end
+    end
+
+    local f = CreateFrame("Frame")
+    f:RegisterEvent("UNIT_HEALTH")
+    f:RegisterEvent("UNIT_POWER_UPDATE")
+    f:RegisterEvent("PLAYER_TARGET_CHANGED")
+    f:SetScript("OnEvent", UpdateEnemyStatus)
+end
+
 local function DarkenArt()
     for i, v in pairs({
         PlayerFrameTexture, TargetFrameTextureFrameTexture, PetFrameTexture,
@@ -666,6 +745,7 @@ local function Init(self, event)
         RegisterChatImprovements()
         RegisterCombatNotifications()
         RegisterMiddleBars()
+        RegisterEnemyStatusDisplay()
         DarkenArt()
 
         DEFAULT_CHAT_FRAME:AddMessage("BuffDefaultUI loaded")
