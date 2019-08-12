@@ -14,7 +14,7 @@
 * Added more chat font sizes
 * Darkened default UI textures slightly
 * Increased the size of most unit frames and other 'critical' UI elements, so that they remain decently sized on smaller UI scales
-* Moved the default player/target portraits slightly towards the center horizontically. An additional option to move them to the bottom-center exists
+* Moved the default player/target unit frames slightly towards the center horizontically. An additional option to move them to the bottom-center exists
 * Added a visual indicator when player enters or leaves combat
 
 ### Looking for BFA?
