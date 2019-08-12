@@ -428,7 +428,13 @@ local function RegisterMiddleBars()
         else
             bar:SetPoint("CENTER", 0, -199)
             bar:SetSize(160, 8)
-            fill:SetVertexColor(0, 100/255, 240/255)
+            if select(2, UnitClass("player")) == "WARRIOR" then
+                fill:SetVertexColor(256/255, 30/255, 0/255)
+            elseif select(2, UnitClass("player")) == "ROGUE" then
+                fill:SetVertexColor(255/255, 245/255, 105/255)
+            else
+                fill:SetVertexColor(0, 100/255, 240/255)
+            end
         end
     end
 
