@@ -465,10 +465,11 @@ local function RegisterMiddleBars()
         elseif playerClass == "ROGUE" then
             color = ENERGY_COLOR
         elseif playerClass == "DRUID" then
-            for i = 1, GetNumShapeshiftForms() do
-                MiddlePowerBar:SetValue(UnitPower("player"))
-                MiddlePowerBar:SetMinMaxValues(0, UnitPowerMax("player"))
+            -- Changing forms will change these values (e.g. going from 3500 mana to 100 rage)
+            MiddlePowerBar:SetValue(UnitPower("player"))
+            MiddlePowerBar:SetMinMaxValues(0, UnitPowerMax("player"))
 
+            for i = 1, GetNumShapeshiftForms() do
                 local _, active, _, spellId = GetShapeshiftFormInfo(i)
                 if active then
                     if spellId == 768 then color = ENERGY_COLOR
