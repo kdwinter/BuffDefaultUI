@@ -539,6 +539,35 @@ local function RegisterMiddleBars()
 end
 
 local function RegisterQuestAutomation()
+    local function QuestRequiresCurrency()
+        for i = 1, 6 do
+            local progItem = _G["QuestProgressItem" ..i] or nil
+            if progItem and progItem:IsShown() and progItem.type == "required" then
+                if progItem.objectType == "currency" then
+                    return true
+                elseif progItem.objectType == "item" then
+                    local name, texture, numItems = GetQuestItemInfo("required", i)
+                    if name then
+                        local itemID = GetItemInfoInstant(name)
+                        if itemID then
+                            local _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, isCraftingReagent = GetItemInfo(itemID)
+                            if isCraftingReagent then
+                                return true
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    local function QuestRequiresGold()
+        local goldRequiredAmount = GetQuestMoneyToGet()
+        if goldRequiredAmount and goldRequiredAmount > 0 then
+            return true
+        end
+    end
+
     local function AutomateQuesting(self, event, arg1)
         if not BDUI_CharacterSettings.AutomateQuesting then return end
         if IsShiftKeyDown() then return end
@@ -686,8 +715,8 @@ local function RegisterEnemyStatusDisplay()
     end
 
     local f = CreateFrame("Frame")
-    f:RegisterEvent("UNIT_HEALTH")
-    f:RegisterEvent("UNIT_POWER_UPDATE")
+    f:RegisterEvent("UNIT_HEALTH", "target")
+    f:RegisterEvent("UNIT_POWER_UPDATE", "target")
     f:RegisterEvent("PLAYER_TARGET_CHANGED")
     f:SetScript("OnEvent", UpdateEnemyStatus)
 end
