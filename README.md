@@ -7,7 +7,7 @@
 * Automatically repair when visiting a vendor that can repair *[this can be toggled on/off]*
 * Automatically vendor grey items/junk *[this can be toggled on/off]*
 * Added cast times to castbar, removed border around castbar, and made it slightly bigger
-* Added additional (smaller) health and power bars to the middle of the screen, Legion/BFA-style *[this can be toggled on/off]*
+* Added additional (smaller) personal health and power bars to the middle of the screen, Legion/BFA-style *[this can be toggled on/off]*
 * Class colored health bars *[this can be toggled on/off]*
 * Class icons (new, flat versions) in portraits *[this can be toggled on/off]*
 * Made URLs in chat clickable

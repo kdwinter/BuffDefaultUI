@@ -34,7 +34,8 @@ local GLOBAL_DEFAULTS = {
 }
 
 local CHARACTER_DEFAULTS = {
-    FramePosition = "TOP"
+    FramePosition    = "TOP",
+    AutomateQuesting = true
 }
 
 local CHAT_EVENTS = {
@@ -184,22 +185,22 @@ local function RegisterHealthbarColors()
 end
 
 local function SetBarTextures()
-    local texture = [[Interface\AddOns\BuffDefaultUI\bar_textures\Cupence]]
+    local texture = "Interface\\AddOns\\"..ADDON_NAME.."\\bar_textures\\Cupence"
 
     PlayerFrameHealthBar:SetStatusBarTexture(texture)
-    PlayerFramePowerBar:SetStatusBarTexture(texture)
+    PlayerFrameManaBar:SetStatusBarTexture(texture)
     TargetFrameHealthBar:SetStatusBarTexture(texture)
-    TargetFramePowerBar:SetStatusBarTexture(texture)
+    TargetFrameManaBar:SetStatusBarTexture(texture)
     TargetFrameToT.healthbar:SetStatusBarTexture(texture)
     PetFrameHealthBar:SetStatusBarTexture(texture)
     PartyMemberFrame1HealthBar:SetStatusBarTexture(texture)
-    PartyMemberFrame1PowerBar:SetStatusBarTexture(texture)
+    PartyMemberFrame1ManaBar:SetStatusBarTexture(texture)
     PartyMemberFrame2HealthBar:SetStatusBarTexture(texture)
-    PartyMemberFrame2PowerBar:SetStatusBarTexture(texture)
+    PartyMemberFrame2ManaBar:SetStatusBarTexture(texture)
     PartyMemberFrame3HealthBar:SetStatusBarTexture(texture)
-    PartyMemberFrame3PowerBar:SetStatusBarTexture(texture)
+    PartyMemberFrame3ManaBar:SetStatusBarTexture(texture)
     PartyMemberFrame4HealthBar:SetStatusBarTexture(texture)
-    PartyMemberFrame4PowerBar:SetStatusBarTexture(texture)
+    PartyMemberFrame4ManaBar:SetStatusBarTexture(texture)
     MainMenuExpBar:SetStatusBarTexture(texture)
     CastingBarFrame:SetStatusBarTexture(texture)
     MirrorTimer1StatusBar:SetStatusBarTexture(texture)
@@ -254,7 +255,7 @@ local function RegisterPlayerFrameClassIcon()
                 if UnitIsPlayer(self.unit) then
                     local t = CLASS_ICON_TCOORDS[select(2, UnitClass(self.unit))]
                     if t then
-                        self.portrait:SetTexture([[Interface\AddOns\BuffDefaultUI\class_icons\UI-Classes-Circles]])
+                        self.portrait:SetTexture("Interface\\AddOns\\"..ADDON_NAME.."\\class_icons\\UI-Classes-Circles")
                         --self.portrait:SetTexture([[Interface\TargetingFrame\UI-Classes-Circles]])
                         self.portrait:SetTexCoord(unpack(t))
                     else
@@ -419,48 +420,80 @@ end
 local MiddleHealthBar = CreateFrame("StatusBar", nil, UIParent)
 local MiddlePowerBar  = CreateFrame("StatusBar", nil, UIParent)
 
+local function ToggleMiddleBars()
+    if BDUI_GlobalSettings.AddMiddleBars then
+        MiddleHealthBar:Show()
+        MiddleHealthBar:RegisterUnitEvent("UNIT_MAXHEALTH", "player")
+        MiddleHealthBar:RegisterUnitEvent("UNIT_HEALTH", "player")
+        MiddleHealthBar:RegisterUnitEvent("UNIT_HEALTH_FREQUENT", "player")
+        MiddleHealthBar:RegisterUnitEvent("PLAYER_ENTERING_WORLD")
+
+        MiddlePowerBar:Show()
+        MiddlePowerBar:RegisterUnitEvent("UNIT_MAXPOWER", "player")
+        MiddlePowerBar:RegisterUnitEvent("UNIT_POWER_UPDATE", "player")
+        MiddlePowerBar:RegisterUnitEvent("UNIT_POWER_FREQUENT", "player")
+        MiddlePowerBar:RegisterUnitEvent("PLAYER_ENTERING_WORLD")
+    else
+        MiddleHealthBar:Hide()
+        MiddleHealthBar:UnregisterAllEvents()
+
+        MiddlePowerBar:Hide()
+        MiddlePowerBar:UnregisterAllEvents()
+    end
+end
+
 local function RegisterMiddleBars()
     for i, bar in pairs({MiddleHealthBar, MiddlePowerBar}) do
         bar:SetMovable(false)
         bar:EnableMouse(false)
         bar:SetBackdrop({bgFile = [[Interface\DialogFrame\UI-DialogBox-Background-Dark]]})
-        bar:SetStatusBarTexture([[Interface\AddOns\BuffDefaultUI\bar_textures\Cupence]])
+        bar:SetStatusBarTexture("Interface\\AddOns\\"..ADDON_NAME.."\\bar_textures\\Cupence")
         bar:SetOrientation("HORIZONTAL")
         bar:SetBackdropColor(0, 0, 0, 0.7)
+    end
 
-        local fill = bar:GetStatusBarTexture()
+    MiddleHealthBar:SetPoint("CENTER", 0, -190)
+    MiddleHealthBar:SetSize(180, 12)
+    MiddleHealthBar:GetStatusBarTexture():SetVertexColor(0, 255/255, 0)
 
-        if i == 1 then
-            bar:SetPoint("CENTER", 0, -190)
-            bar:SetSize(160, 10)
+    local playerClass = select(2, UnitClass("player"))
+    local function SetMiddlePowerBarColor()
+        local color
 
-            fill:SetVertexColor(0, 255/255, 0)
-        else
-            bar:SetPoint("CENTER", 0, -199)
-            bar:SetSize(160, 8)
+        if playerClass == "WARRIOR" then
+            color = RAGE_COLOR
+        elseif playerClass == "ROGUE" then
+            color = ENERGY_COLOR
+        elseif playerClass == "DRUID" then
+            for i = 1, GetNumShapeshiftForms() do
+                MiddlePowerBar:SetValue(UnitPower("player"))
+                MiddlePowerBar:SetMinMaxValues(0, UnitPowerMax("player"))
 
-            local klass = select(2, UnitClass("player"))
-            local color
+                local _, active, _, spellId = GetShapeshiftFormInfo(i)
+                if active then
+                    if spellId == 768 then color = ENERGY_COLOR
+                    elseif spellId == 5487 or spellId == 9634 then color = RAGE_COLOR
+                    else color = MANA_COLOR
+                    end
+                end
 
-            if klass == "WARRIOR" then
-                color = RAGE_COLOR
-            elseif klass == "ROGUE" then
-                color = ENERGY_COLOR
-            elseif klass == "DRUID" then
-                -- TODO: Update on druid form change events
-                --if select(2, GetShapeshiftFormInfo(1)) then
-                --    color = RAGE_COLOR
-                --elseif select(2, GetShapeshiftFormInfo(3)) then
-                --    color = ENERGY_COLOR
-                --else
-                    color = MANA_COLOR
-                --end
-            else
-                color = MANA_COLOR
+                if not color then color = MANA_COLOR end
             end
-
-            fill:SetVertexColor(unpack(color))
+        else
+            color = MANA_COLOR
         end
+
+        MiddlePowerBar:GetStatusBarTexture():SetVertexColor(unpack(color))
+    end
+    MiddlePowerBar:SetPoint("CENTER", 0, -200)
+    MiddlePowerBar:SetSize(180, 9)
+    SetMiddlePowerBarColor()
+
+    -- Dynamic for druids
+    if playerClass == "DRUID" then
+        local f = CreateFrame("Frame")
+        f:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
+        f:SetScript("OnEvent", SetMiddlePowerBarColor)
     end
 
     MiddleHealthBar:SetScript("OnEvent", function(self, event, ...)
@@ -504,34 +537,12 @@ local function RegisterMiddleBars()
     ToggleMiddleBars()
 end
 
-local function ToggleMiddleBars()
-    if BDUI_GlobalSettings.AddMiddleBars then
-        MiddleHealthBar:Show()
-        MiddleHealthBar:RegisterUnitEvent("UNIT_MAXHEALTH", "player")
-        MiddleHealthBar:RegisterUnitEvent("UNIT_HEALTH", "player")
-        MiddleHealthBar:RegisterUnitEvent("UNIT_HEALTH_FREQUENT", "player")
-        MiddleHealthBar:RegisterUnitEvent("PLAYER_ENTERING_WORLD")
-
-        MiddlePowerBar:Show()
-        MiddlePowerBar:RegisterUnitEvent("UNIT_MAXPOWER", "player")
-        MiddlePowerBar:RegisterUnitEvent("UNIT_POWER_UPDATE", "player")
-        MiddlePowerBar:RegisterUnitEvent("UNIT_POWER_FREQUENT", "player")
-        MiddlePowerBar:RegisterUnitEvent("PLAYER_ENTERING_WORLD")
-    else
-        MiddleHealthBar:Hide()
-        MiddleHealthBar:UnregisterAllEvents()
-
-        MiddlePowerBar:Hide()
-        MiddlePowerBar:UnregisterAllEvents()
-    end
-end
-
 local function RegisterQuestAutomation()
     local function AutomateQuesting(self, event, arg1)
+        if not BDUI_CharacterSettings.AutomateQuesting then return end
         if IsShiftKeyDown() then return end
 
         if event == "QUEST_DETAIL" then
-            if isNpcBlocked("Accept") then return end
             if QuestGetAutoAccept() then
                 CloseQuest()
             else
@@ -542,12 +553,10 @@ local function RegisterQuestAutomation()
             ConfirmAcceptQuest()
             StaticPopup_Hide("QUEST_ACCEPT")
         elseif event == "QUEST_PROGRESS" and IsQuestCompletable() then
-            if isNpcBlocked("Complete") then return end
             if QuestRequiresCurrency() then return end
             if QuestRequiresGold() then return end
             CompleteQuest()
         elseif event == "QUEST_COMPLETE" then
-            if isNpcBlocked("Complete") then return end
             if QuestRequiresCurrency() then return end
             if QuestRequiresGold() then return end
             if GetNumQuestChoices() <= 1 then
@@ -560,7 +569,6 @@ local function RegisterQuestAutomation()
             end
         elseif event == "GOSSIP_SHOW" or event == "QUEST_GREETING" then
             if UnitExists("npc") or QuestFrameGreetingPanel:IsShown() or GossipFrameGreetingPanel:IsShown() then
-                if isNpcBlocked("Select") then return end
                 if event == "QUEST_GREETING" then
                     for i = 1, GetNumActiveQuests() do
                         local title, isComplete = GetActiveTitle(i)
@@ -698,14 +706,14 @@ local function DarkenArt()
         MiniMapTrackingButtonBorder, MiniMapLFGFrameBorder, MiniMapBattlefieldBorder,
         MiniMapMailBorder, MinimapBorderTop, select(1, TimeManagerClockButton:GetRegions())
     }) do
-        v:SetVertexColor(.4, .4, .4)
+        v:SetVertexColor(.2, .2, .2)
     end
 
     for i, v in pairs({select(2, TimeManagerClockButton:GetRegions())}) do
         v:SetVertexColor(1, 1, 1)
     end
     for i, v in pairs({MainMenuBarLeftEndCap, MainMenuBarRightEndCap}) do
-        v:SetVertexColor(.35, .35, .35)
+        v:SetVertexColor(.15, .15, .15)
     end
 end
 
@@ -714,7 +722,7 @@ end
 -----------------------------------------------------------------------------
 
 local optionsPanelCreated = false
-local OptionsPanel = CreateFrame("Frame", "BuffDefaultUIPanel", UIParent)
+local OptionsPanel = CreateFrame("Frame", ADDON_NAME.."Panel", UIParent)
 
 function CreateOptionsPanel()
     if optionsPanelCreated then
@@ -736,6 +744,7 @@ function CreateOptionsPanel()
     local AutoRepairCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelAutoRepair", OptionsPanel, "OptionsCheckButtonTemplate")
     local UseGuildRepairCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelUseGuildRepair", OptionsPanel, "OptionsCheckButtonTemplate")
     local VendorGreysCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelVendorGreys", OptionsPanel, "OptionsCheckButtonTemplate")
+    local AutomateQuestingCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelAutomateQuesting", OptionsPanel, "OptionsCheckButtonTemplate")
     local OptionsPanelUFTitle = OptionsPanel:CreateFontString(nil, "ARTWORK", "GameFontNormalLeft")
     local ClassColorHealthCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelClassColorHealth", OptionsPanel, "OptionsCheckButtonTemplate")
     local ClassIconPortraitCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelClassIconPortrait", OptionsPanel, "OptionsCheckButtonTemplate")
@@ -779,8 +788,15 @@ function CreateOptionsPanel()
         BDUI_GlobalSettings.VendorGreys = self:GetChecked()
     end)
 
+    _G[ADDON_NAME.."OptionsPanelAutomateQuestingText"]:SetText("Automatically accept and complete quest dialogs")
+    AutomateQuestingCheckbox:SetChecked(BDUI_CharacterSettings.AutomateQuesting)
+    AutomateQuestingCheckbox:SetPoint("TOPLEFT", VendorGreysCheckbox, "BOTTOMLEFT", 0, 0)
+    AutomateQuestingCheckbox:SetScript("OnClick", function(self)
+        BDUI_CharacterSettings.AutomateQuesting = self:GetChecked()
+    end)
+
     OptionsPanelUFTitle:SetText("|cffffffffFrames")
-    OptionsPanelUFTitle:SetPoint("TOPLEFT", VendorGreysCheckbox, "BOTTOMLEFT", 0, -24)
+    OptionsPanelUFTitle:SetPoint("TOPLEFT", AutomateQuestingCheckbox, "BOTTOMLEFT", 0, -24)
 
     _G[ADDON_NAME.."OptionsPanelClassColorHealthText"]:SetText("Use class colors in healthbars")
     ClassColorHealthCheckbox:SetChecked(BDUI_GlobalSettings.ClassColorHealth)
@@ -864,7 +880,7 @@ local function Init(self, event)
         RegisterQuestAutomation()
         DarkenArt()
 
-        DEFAULT_CHAT_FRAME:AddMessage("BuffDefaultUI loaded")
+        DEFAULT_CHAT_FRAME:AddMessage(ADDON_NAME.." loaded")
     end
 end
 
@@ -880,12 +896,12 @@ f:SetScript("OnEvent", Init)
 --function SlashCmdList.BDUI_HELP(message, editbox)
 SlashCmdList["BDUI_HELP"] = function(message, editbox)
     if message == "reset" then
-        BDUI_GlobalSettings        = GLOBAL_DEFAULTS
+        BDUI_GlobalSettings    = GLOBAL_DEFAULTS
         BDUI_CharacterSettings = CHARACTER_DEFAULTS
         MoveAndScaleFrames()
-        DEFAULT_CHAT_FRAME:AddMessage("BuffDefaultUI settings have been reset to their defaults", 255, 255, 0)
+        DEFAULT_CHAT_FRAME:AddMessage(ADDON_NAME.." settings have been reset to their defaults", 255, 255, 0)
     elseif message == "status" then
-        DEFAULT_CHAT_FRAME:AddMessage("BuffDefaultUI Settings:", 255, 255, 0)
+        DEFAULT_CHAT_FRAME:AddMessage(ADDON_NAME.." settings:", 255, 255, 0)
         for k, v in pairs(BDUI_GlobalSettings) do
             DEFAULT_CHAT_FRAME:AddMessage(""..tostring(k)..": "..tostring(v))
         end
@@ -896,7 +912,7 @@ SlashCmdList["BDUI_HELP"] = function(message, editbox)
         InterfaceOptionsFrame_OpenToCategory(OptionsPanel)
         InterfaceOptionsFrame_OpenToCategory(OptionsPanel)
     else -- default help message
-        DEFAULT_CHAT_FRAME:AddMessage("BuffDefaultUI Usage:", 255, 255, 0)
+        DEFAULT_CHAT_FRAME:AddMessage(ADDON_NAME.." usage:", 255, 255, 0)
         DEFAULT_CHAT_FRAME:AddMessage("/bdui", 240, 240, 240)
         DEFAULT_CHAT_FRAME:AddMessage("/bdui reset", 240, 240, 240)
     end
