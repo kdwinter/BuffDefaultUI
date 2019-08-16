@@ -17,6 +17,7 @@
 * Moved the default player/target unit frames slightly towards the center horizontically. An additional option to move them to the bottom-center exists
 * Added a visual indicator when player enters or leaves combat
 * Added enemy health percentages and mana numbers to their unit frames
+* Automatically accept and complete quest dialogs
 
 ### Looking for BFA?
 

@@ -187,19 +187,19 @@ local function SetBarTextures()
     local texture = [[Interface\AddOns\BuffDefaultUI\bar_textures\Cupence]]
 
     PlayerFrameHealthBar:SetStatusBarTexture(texture)
-    PlayerFrameManaBar:SetStatusBarTexture(texture)
+    PlayerFramePowerBar:SetStatusBarTexture(texture)
     TargetFrameHealthBar:SetStatusBarTexture(texture)
-    TargetFrameManaBar:SetStatusBarTexture(texture)
+    TargetFramePowerBar:SetStatusBarTexture(texture)
     TargetFrameToT.healthbar:SetStatusBarTexture(texture)
     PetFrameHealthBar:SetStatusBarTexture(texture)
     PartyMemberFrame1HealthBar:SetStatusBarTexture(texture)
-    PartyMemberFrame1ManaBar:SetStatusBarTexture(texture)
+    PartyMemberFrame1PowerBar:SetStatusBarTexture(texture)
     PartyMemberFrame2HealthBar:SetStatusBarTexture(texture)
-    PartyMemberFrame2ManaBar:SetStatusBarTexture(texture)
+    PartyMemberFrame2PowerBar:SetStatusBarTexture(texture)
     PartyMemberFrame3HealthBar:SetStatusBarTexture(texture)
-    PartyMemberFrame3ManaBar:SetStatusBarTexture(texture)
+    PartyMemberFrame3PowerBar:SetStatusBarTexture(texture)
     PartyMemberFrame4HealthBar:SetStatusBarTexture(texture)
-    PartyMemberFrame4ManaBar:SetStatusBarTexture(texture)
+    PartyMemberFrame4PowerBar:SetStatusBarTexture(texture)
     MainMenuExpBar:SetStatusBarTexture(texture)
     CastingBarFrame:SetStatusBarTexture(texture)
     MirrorTimer1StatusBar:SetStatusBarTexture(texture)
@@ -473,10 +473,6 @@ local function RegisterMiddleBars()
             self:SetValue(UnitHealth("player"))
         end
     end)
-    MiddleHealthBar:RegisterUnitEvent("UNIT_MAXHEALTH", "player")
-    MiddleHealthBar:RegisterUnitEvent("UNIT_HEALTH", "player")
-    MiddleHealthBar:RegisterUnitEvent("UNIT_HEALTH_FREQUENT", "player")
-    MiddleHealthBar:RegisterUnitEvent("PLAYER_ENTERING_WORLD")
 
     --[[local function UpdateHealthBar()
         local healthPercentage = UnitHealth("player") / UnitHealthMax("player")
@@ -496,10 +492,6 @@ local function RegisterMiddleBars()
             self:SetValue(UnitPower("player"))
         end
     end)
-    MiddlePowerBar:RegisterUnitEvent("UNIT_MAXPOWER", "player")
-    MiddlePowerBar:RegisterUnitEvent("UNIT_POWER_UPDATE", "player")
-    MiddlePowerBar:RegisterUnitEvent("UNIT_POWER_FREQUENT", "player")
-    MiddlePowerBar:RegisterUnitEvent("PLAYER_ENTERING_WORLD")
 
     --[[local function UpdatePowerBar()
         local powerPercentage = UnitPower("player") / UnitPowerMax("player")
@@ -508,16 +500,108 @@ local function RegisterMiddleBars()
     end
     MiddlePowerBar:SetScript("OnValueChanged",  UpdatePowerBar)
     MiddlePowerBar:SetScript("OnMinMaxChanged", UpdatePowerBar)]]
+
+    ToggleMiddleBars()
 end
 
 local function ToggleMiddleBars()
     if BDUI_GlobalSettings.AddMiddleBars then
         MiddleHealthBar:Show()
+        MiddleHealthBar:RegisterUnitEvent("UNIT_MAXHEALTH", "player")
+        MiddleHealthBar:RegisterUnitEvent("UNIT_HEALTH", "player")
+        MiddleHealthBar:RegisterUnitEvent("UNIT_HEALTH_FREQUENT", "player")
+        MiddleHealthBar:RegisterUnitEvent("PLAYER_ENTERING_WORLD")
+
         MiddlePowerBar:Show()
+        MiddlePowerBar:RegisterUnitEvent("UNIT_MAXPOWER", "player")
+        MiddlePowerBar:RegisterUnitEvent("UNIT_POWER_UPDATE", "player")
+        MiddlePowerBar:RegisterUnitEvent("UNIT_POWER_FREQUENT", "player")
+        MiddlePowerBar:RegisterUnitEvent("PLAYER_ENTERING_WORLD")
     else
         MiddleHealthBar:Hide()
+        MiddleHealthBar:UnregisterAllEvents()
+
         MiddlePowerBar:Hide()
+        MiddlePowerBar:UnregisterAllEvents()
     end
+end
+
+local function RegisterQuestAutomation()
+    local function AutomateQuesting(self, event, arg1)
+        if IsShiftKeyDown() then return end
+
+        if event == "QUEST_DETAIL" then
+            if isNpcBlocked("Accept") then return end
+            if QuestGetAutoAccept() then
+                CloseQuest()
+            else
+                AcceptQuest()
+                HideUIPanel(QuestFrame)
+            end
+        elseif event == "QUEST_ACCEPT_CONFIRM" then
+            ConfirmAcceptQuest()
+            StaticPopup_Hide("QUEST_ACCEPT")
+        elseif event == "QUEST_PROGRESS" and IsQuestCompletable() then
+            if isNpcBlocked("Complete") then return end
+            if QuestRequiresCurrency() then return end
+            if QuestRequiresGold() then return end
+            CompleteQuest()
+        elseif event == "QUEST_COMPLETE" then
+            if isNpcBlocked("Complete") then return end
+            if QuestRequiresCurrency() then return end
+            if QuestRequiresGold() then return end
+            if GetNumQuestChoices() <= 1 then
+                GetQuestReward(GetNumQuestChoices())
+            end
+        elseif event == "QUEST_AUTOCOMPLETE" then
+            local i = GetQuestLogIndexByID(arg1)
+            if GetQuestLogIsAutocomplete(i) then
+                ShowQuestComplete(i)
+            end
+        elseif event == "GOSSIP_SHOW" or event == "QUEST_GREETING" then
+            if UnitExists("npc") or QuestFrameGreetingPanel:IsShown() or GossipFrameGreetingPanel:IsShown() then
+                if isNpcBlocked("Select") then return end
+                if event == "QUEST_GREETING" then
+                    for i = 1, GetNumActiveQuests() do
+                        local title, isComplete = GetActiveTitle(i)
+                        if title and isComplete then
+                            return SelectActiveQuest(i)
+                        end
+                    end
+                    for i = 1, GetNumActiveQuests() do
+                        local title, isComplete = GetAvailableTitle(i)
+                        if title and not isComplete then
+                            return SelectAvailableQuest(i)
+                        end
+                    end
+                else
+                    for i = 1, GetNumGossipActiveQuests() do
+                        local title, level, isTrivial, isComplete, isLegendary, isIgnored = select(i * 6 - 5, GetGossipActiveQuests())
+                        if title and isComplete then
+                            return SelectGossipActiveQuest(i)
+                        end
+                    end
+                    for i = 1, GetNumGossipAvailableQuests() do
+                        local title, level, isTrivial, isDaily, isRepeatable, isLegendary, isIgnored = select(i * 7 - 6, GetGossipAvailableQuests())
+                        if title then
+                            return SelectGossipAvailableQuest(i)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    local f = CreateFrame("Frame")
+    f:RegisterEvent("QUEST_DETAIL")
+    f:RegisterEvent("QUEST_ACCEPT_CONFIRM")
+    f:RegisterEvent("QUEST_PROGRESS")
+    f:RegisterEvent("QUEST_COMPLETE")
+    f:RegisterEvent("QUEST_GREETING")
+    f:RegisterEvent("QUEST_AUTOCOMPLETE")
+    f:RegisterEvent("GOSSIP_SHOW")
+    f:RegisterEvent("QUEST_FINISHED")
+    f:SetScript("OnEvent", AutomateQuesting)
 end
 
 local function RegisterEnemyStatusDisplay()
@@ -777,6 +861,7 @@ local function Init(self, event)
         RegisterCombatNotifications()
         RegisterMiddleBars()
         RegisterEnemyStatusDisplay()
+        RegisterQuestAutomation()
         DarkenArt()
 
         DEFAULT_CHAT_FRAME:AddMessage("BuffDefaultUI loaded")
