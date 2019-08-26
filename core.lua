@@ -79,21 +79,27 @@ local ENERGY_COLOR = {255/255, 245/255, 105/255}
 -----------------------------------------------------------------------------
 
 local function FixCastingBarVisual()
+    -- Increase the default castbar size
     CastingBarFrame:SetSize(180, 20)
 
+    -- Fix text alignment for new size
     CastingBarFrame.Text:ClearAllPoints()
     CastingBarFrame.Text:SetPoint("CENTER", CastingBarFrame, "CENTER", 0, 0)
 
+    -- Show icon of spell being cast
     CastingBarFrame.Icon:Show()
     CastingBarFrame.Icon:SetHeight(22)
     CastingBarFrame.Icon:SetWidth(22)
 
+    -- Hide default border texture
     CastingBarFrame.Border:SetSize(240, 75)
     CastingBarFrame.Border:Hide()
     CastingBarFrame.BorderShield:Hide()
 
+    -- Fix border size when a cast finishes
     CastingBarFrame.Flash:SetSize(240, 75)
 
+    -- Add a time remaining/total time string to the castbar
     CastingBarFrame.timer = CastingBarFrame:CreateFontString(nil)
     CastingBarFrame.timer:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
     CastingBarFrame.timer:SetPoint("TOP", CastingBarFrame, "BOTTOM", 0, 0)
@@ -116,6 +122,8 @@ local function FixCastingBarVisual()
     end)
 end
 
+-- Move unit frames based on setting
+-- Also rescale most unit frames so that they remain decently sized on smaller UI scales
 local function MoveAndScaleFrames()
     local positions = FRAME_POSITIONS[BDUI_CharacterSettings.FramePosition]
 
@@ -157,6 +165,7 @@ local function MoveAndScaleFrames()
     end
 end
 
+-- Hide numbers that pop up in player frame when taking damage. Just clutters
 local function HideHitIndicators()
     PlayerHitIndicator:SetText(nil)
     PlayerHitIndicator.SetText = function() end
@@ -165,6 +174,7 @@ local function HideHitIndicators()
     PetHitIndicator.SetText = function() end
 end
 
+-- Use class colors in healthbars
 local function RegisterHealthbarColors()
     local function ClassColorHealthbars(statusbar, unit)
         if BDUI_GlobalSettings.ClassColorHealth then
@@ -184,6 +194,7 @@ local function RegisterHealthbarColors()
     end)
 end
 
+-- Use a flatter background texture for resource bars
 local function SetBarTextures()
     local texture = "Interface\\AddOns\\"..ADDON_NAME.."\\bar_textures\\Cupence"
 
@@ -208,6 +219,7 @@ local function SetBarTextures()
     MirrorTimer3StatusBar:SetStatusBarTexture(texture)
 end
 
+-- Auto repair on vendor visits
 local function RegisterAutoRepairEvents()
     local function RepairItemsAndSellTrash(self, event)
         if (event == "MERCHANT_SHOW") then
@@ -244,6 +256,7 @@ local function RegisterAutoRepairEvents()
     f:SetScript("OnEvent", RepairItemsAndSellTrash)
 end
 
+-- Render class icons in portraits rather than their actual portraits
 local function RegisterPlayerFrameClassIcon()
     hooksecurefunc("UnitFramePortrait_Update", function(self)
         if BDUI_GlobalSettings.ClassIconPortrait then
@@ -269,6 +282,7 @@ local function RegisterPlayerFrameClassIcon()
     end)
 end
 
+-- Populate SavedVariables with defaults when they're not already set
 local function LoadSettings()
     -- Make sure the variables exist
     if BDUI_GlobalSettings == nil then
@@ -301,6 +315,8 @@ local function LoadSettings()
     CopyDefaults(CHARACTER_DEFAULTS, BDUI_CharacterSettings)
 end
 
+-- Add more font sizes to chat boxes, make URLs clickable, and enable arrow
+-- functionality inside editboxes
 local function RegisterChatImprovements()
     -- Add more chat font sizes
     for i = 1, 23 do
@@ -400,6 +416,7 @@ local function RegisterChatImprovements()
     -- TODO: chat history support
 end
 
+-- Show a notification when players enters and leaves combat
 local function RegisterCombatNotifications()
     UIErrorsFrame:Show()
 
@@ -442,19 +459,37 @@ local function ToggleMiddleBars()
     end
 end
 
+-- Render personal resource display in the middle of your screen, akin to what
+-- Legion/BFA offered
 local function RegisterMiddleBars()
     for i, bar in pairs({MiddleHealthBar, MiddlePowerBar}) do
         bar:SetMovable(false)
         bar:EnableMouse(false)
-        bar:SetBackdrop({bgFile = [[Interface\DialogFrame\UI-DialogBox-Background-Dark]]})
+        --bar:SetBackdrop({bgFile = [[Interface\DialogFrame\UI-DialogBox-Background-Dark]]})
         bar:SetStatusBarTexture("Interface\\AddOns\\"..ADDON_NAME.."\\bar_textures\\Cupence")
         bar:SetOrientation("HORIZONTAL")
         bar:SetBackdropColor(0, 0, 0, 0.7)
     end
 
     MiddleHealthBar:SetPoint("CENTER", 0, -190)
-    MiddleHealthBar:SetSize(180, 12)
+    MiddleHealthBar:SetSize(180, 15)
     MiddleHealthBar:GetStatusBarTexture():SetVertexColor(0, 255/255, 0)
+    MiddleHealthBar:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+                                 edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+                                 tile = true, tileSize = 16, edgeSize = 16,
+                                 insets = {left = -2, right = -2, top = -2, bottom = -15}})
+    MiddleHealthBar:SetBackdropColor(0, 0, 0, 1);
+    MiddleHealthBar:SetBackdropBorderColor(0, 0, 0, 1);
+
+    MiddleHealthBar.Text = MiddleHealthBar:CreateFontString(nil, "OVERLAY")
+    MiddleHealthBar.Text:SetFont(STANDARD_TEXT_FONT, 11, "OUTLINE")
+    MiddleHealthBar.Text:SetTextColor(1, 1, 1, 1)
+    MiddleHealthBar.Text:SetJustifyV("CENTER")
+    MiddleHealthBar.Text:SetJustifyH("CENTER")
+    MiddleHealthBar.Text:SetText("")
+    MiddleHealthBar.Text:SetShadowColor(0, 0, 0, 0)
+    MiddleHealthBar.Text:SetShadowOffset(1, -1)
+    MiddleHealthBar.Text:SetPoint("CENTER", MiddleHealthBar, 0, 0)
 
     local playerClass = select(2, UnitClass("player"))
     local function SetMiddlePowerBarColor()
@@ -486,9 +521,19 @@ local function RegisterMiddleBars()
 
         MiddlePowerBar:GetStatusBarTexture():SetVertexColor(unpack(color))
     end
-    MiddlePowerBar:SetPoint("CENTER", 0, -200)
-    MiddlePowerBar:SetSize(180, 9)
+    MiddlePowerBar:SetPoint("CENTER", 0, -205)
+    MiddlePowerBar:SetSize(180, 11)
     SetMiddlePowerBarColor()
+
+    MiddlePowerBar.Text = MiddlePowerBar:CreateFontString(nil, "OVERLAY")
+    MiddlePowerBar.Text:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+    MiddlePowerBar.Text:SetTextColor(1, 1, 1, 1)
+    MiddlePowerBar.Text:SetJustifyV("CENTER")
+    MiddlePowerBar.Text:SetJustifyH("CENTER")
+    MiddlePowerBar.Text:SetText("")
+    MiddlePowerBar.Text:SetShadowColor(0, 0, 0, 0)
+    MiddlePowerBar.Text:SetShadowOffset(1, -1)
+    MiddlePowerBar.Text:SetPoint("CENTER", MiddlePowerBar, 0, 0)
 
     -- Dynamic for druids
     if playerClass == "DRUID" then
@@ -508,13 +553,12 @@ local function RegisterMiddleBars()
         end
     end)
 
-    --[[local function UpdateHealthBar()
-        local healthPercentage = UnitHealth("player") / UnitHealthMax("player")
-        local totalWidth = MiddleHealthBar:GetWidth()
-        MiddleHealthBar:GetStatusBarTexture():SetWidth(healthPercentage * totalWidth)
+    local function UpdateHealthText()
+        local healthPercentage = string.format("%d", (UnitHealth("player") / UnitHealthMax("player")) * 100)
+        MiddleHealthBar.Text:SetText(healthPercentage.."%")
     end
-    MiddleHealthBar:SetScript("OnValueChanged",  UpdateHealthBar)
-    MiddleHealthBar:SetScript("OnMinMaxChanged", UpdateHealthBar)]]
+    MiddleHealthBar:SetScript("OnValueChanged",  UpdateHealthText)
+    MiddleHealthBar:SetScript("OnMinMaxChanged", UpdateHealthText)
 
     MiddlePowerBar:SetScript("OnEvent", function(self, event, ...)
         if event == "UNIT_MAXPOWER" then
@@ -527,17 +571,17 @@ local function RegisterMiddleBars()
         end
     end)
 
-    --[[local function UpdatePowerBar()
-        local powerPercentage = UnitPower("player") / UnitPowerMax("player")
-        local totalWidth = MiddlePowerBar:GetWidth()
-        MiddlePowerBar:GetStatusBarTexture():SetWidth(powerPercentage * totalWidth)
+    local function UpdatePowerText()
+        local powerPercentage = string.format("%d", (UnitPower("player") / UnitPowerMax("player")) * 100)
+        MiddlePowerBar.Text:SetText(powerPercentage.."%")
     end
-    MiddlePowerBar:SetScript("OnValueChanged",  UpdatePowerBar)
-    MiddlePowerBar:SetScript("OnMinMaxChanged", UpdatePowerBar)]]
+    MiddlePowerBar:SetScript("OnValueChanged",  UpdatePowerText)
+    MiddlePowerBar:SetScript("OnMinMaxChanged", UpdatePowerText)
 
     ToggleMiddleBars()
 end
 
+-- Automatically accept/complete quests
 local function RegisterQuestAutomation()
     local function QuestRequiresCurrency()
         for i = 1, 6 do
@@ -642,6 +686,8 @@ local function RegisterQuestAutomation()
     f:SetScript("OnEvent", AutomateQuesting)
 end
 
+-- Show enemy health and power amounts or percentages in their target frame,
+-- based on what's available
 local function RegisterEnemyStatusDisplay()
     PlayerFrameHealthBarText:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
     PlayerFrameHealthBarTextLeft:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
@@ -721,6 +767,7 @@ local function RegisterEnemyStatusDisplay()
     f:SetScript("OnEvent", UpdateEnemyStatus)
 end
 
+-- Darken the default art textures
 local function DarkenArt()
     for i, v in pairs({
         PlayerFrameTexture, TargetFrameTextureFrameTexture, PetFrameTexture,
@@ -736,14 +783,15 @@ local function DarkenArt()
         MiniMapTrackingButtonBorder, MiniMapLFGFrameBorder, MiniMapBattlefieldBorder,
         MiniMapMailBorder, MinimapBorderTop, select(1, TimeManagerClockButton:GetRegions())
     }) do
-        v:SetVertexColor(.2, .2, .2)
+        v:SetVertexColor(.12, .12, .12)
     end
 
     for i, v in pairs({select(2, TimeManagerClockButton:GetRegions())}) do
         v:SetVertexColor(1, 1, 1)
     end
+
     for i, v in pairs({MainMenuBarLeftEndCap, MainMenuBarRightEndCap}) do
-        v:SetVertexColor(.15, .15, .15)
+        v:SetVertexColor(.1, .1, .1)
     end
 end
 
