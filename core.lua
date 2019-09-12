@@ -19,13 +19,17 @@ local FRAME_POSITIONS = {
         PLAYER = {X = -200, Y = -220},
         TARGET = {X =  200, Y = -220},
         PARTY  = {X = -400, Y =  500}
+    },
+    MIDTWO = {
+        PLAYER = {X = -200, Y = -120},
+        TARGET = {X =  200, Y = -120},
+        PARTY  = {X = -600, Y =  300}
     }
 }
 
 -- SavedVariables defaults
 local GLOBAL_DEFAULTS = {
     AutoRepair        = true,
-    UseGuildRepair    = false,
     VendorGreys       = true,
     ClassColorHealth  = true,
     ClassIconPortrait = true,
@@ -34,7 +38,7 @@ local GLOBAL_DEFAULTS = {
 }
 
 local CHARACTER_DEFAULTS = {
-    FramePosition    = "TOP",
+    FramePosition    = "DEFAULT",
     AutomateQuesting = true
 }
 
@@ -102,8 +106,14 @@ local function FixCastingBarVisual()
     -- Add a time remaining/total time string to the castbar
     CastingBarFrame.timer = CastingBarFrame:CreateFontString(nil)
     CastingBarFrame.timer:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
-    CastingBarFrame.timer:SetPoint("TOP", CastingBarFrame, "BOTTOM", 0, 0)
+    CastingBarFrame.timer:SetPoint("TOP", CastingBarFrame, "BOTTOM", 0, -5)
     CastingBarFrame.update = .1
+
+    CastingBarFrame:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+                                 tile = true, tileSize = 16, edgeSize = 16,
+                                 insets = {left = -2, right = -2, top = -2, bottom = -2}})
+    CastingBarFrame:SetBackdropColor(0, 0, 0, 1);
+    CastingBarFrame:SetBackdropBorderColor(0, 0, 0, 1);
 
     CastingBarFrame:HookScript("OnUpdate", function(self, elapsed)
         if not self.timer then return end
@@ -125,19 +135,30 @@ end
 -- Move unit frames based on setting
 -- Also rescale most unit frames so that they remain decently sized on smaller UI scales
 local function MoveAndScaleFrames()
-    local positions = FRAME_POSITIONS[BDUI_CharacterSettings.FramePosition]
+    if BDUI_CharacterSettings.FramePosition == "DEFAULT" then
+        PlayerFrame:ClearAllPoints()
+        PlayerFrame:SetUserPlaced(false)
 
-    PlayerFrame:SetUserPlaced(true)
-    PlayerFrame:ClearAllPoints()
-    PlayerFrame:SetPoint("CENTER", UIParent, "CENTER", positions.PLAYER.X, positions.PLAYER.Y)
+        TargetFrame:ClearAllPoints()
+        TargetFrame:SetUserPlaced(false)
 
-    TargetFrame:SetUserPlaced(true)
-    TargetFrame:ClearAllPoints()
-    TargetFrame:SetPoint("CENTER", UIParent, "CENTER", positions.TARGET.X, positions.TARGET.Y)
+        PartyMemberFrame1:ClearAllPoints()
+        PartyMemberFrame1:SetUserPlaced(false)
+    else
+        local positions = FRAME_POSITIONS[BDUI_CharacterSettings.FramePosition]
 
-    PartyMemberFrame1:SetUserPlaced(true)
-    PartyMemberFrame1:ClearAllPoints()
-    PartyMemberFrame1:SetPoint("CENTER", UIParent, "CENTER", positions.PARTY.X, positions.PARTY.Y)
+        PlayerFrame:SetUserPlaced(true)
+        PlayerFrame:ClearAllPoints()
+        PlayerFrame:SetPoint("CENTER", UIParent, "CENTER", positions.PLAYER.X, positions.PLAYER.Y)
+
+        TargetFrame:SetUserPlaced(true)
+        TargetFrame:ClearAllPoints()
+        TargetFrame:SetPoint("CENTER", UIParent, "CENTER", positions.TARGET.X, positions.TARGET.Y)
+
+        PartyMemberFrame1:SetUserPlaced(true)
+        PartyMemberFrame1:ClearAllPoints()
+        PartyMemberFrame1:SetPoint("CENTER", UIParent, "CENTER", positions.PARTY.X, positions.PARTY.Y)
+    end
 
     for _, UnitFrame in pairs ({
         PlayerFrame,
@@ -183,7 +204,7 @@ local function RegisterHealthbarColors()
                 _, class = UnitClass(unit)
                 c = RAID_CLASS_COLORS[class]
                 statusbar:SetStatusBarColor(c.r, c.g, c.b)
-                --PlayerFrameHealthBar:SetStatusBarColor(0, 1, 0)
+                PlayerFrameHealthBar:SetStatusBarColor(0, 1, 0)
             end
         end
     end
@@ -198,25 +219,25 @@ end
 local function SetBarTextures()
     local texture = "Interface\\AddOns\\"..ADDON_NAME.."\\bar_textures\\Cupence"
 
-    PlayerFrameHealthBar:SetStatusBarTexture(texture)
-    PlayerFrameManaBar:SetStatusBarTexture(texture)
-    TargetFrameHealthBar:SetStatusBarTexture(texture)
-    TargetFrameManaBar:SetStatusBarTexture(texture)
-    TargetFrameToT.healthbar:SetStatusBarTexture(texture)
-    PetFrameHealthBar:SetStatusBarTexture(texture)
-    PartyMemberFrame1HealthBar:SetStatusBarTexture(texture)
-    PartyMemberFrame1ManaBar:SetStatusBarTexture(texture)
-    PartyMemberFrame2HealthBar:SetStatusBarTexture(texture)
-    PartyMemberFrame2ManaBar:SetStatusBarTexture(texture)
-    PartyMemberFrame3HealthBar:SetStatusBarTexture(texture)
-    PartyMemberFrame3ManaBar:SetStatusBarTexture(texture)
-    PartyMemberFrame4HealthBar:SetStatusBarTexture(texture)
-    PartyMemberFrame4ManaBar:SetStatusBarTexture(texture)
-    MainMenuExpBar:SetStatusBarTexture(texture)
+    --PlayerFrameHealthBar:SetStatusBarTexture(texture)
+    --PlayerFrameManaBar:SetStatusBarTexture(texture)
+    --TargetFrameHealthBar:SetStatusBarTexture(texture)
+    --TargetFrameManaBar:SetStatusBarTexture(texture)
+    --TargetFrameToT.healthbar:SetStatusBarTexture(texture)
+    --PetFrameHealthBar:SetStatusBarTexture(texture)
+    --PartyMemberFrame1HealthBar:SetStatusBarTexture(texture)
+    --PartyMemberFrame1ManaBar:SetStatusBarTexture(texture)
+    --PartyMemberFrame2HealthBar:SetStatusBarTexture(texture)
+    --PartyMemberFrame2ManaBar:SetStatusBarTexture(texture)
+    --PartyMemberFrame3HealthBar:SetStatusBarTexture(texture)
+    --PartyMemberFrame3ManaBar:SetStatusBarTexture(texture)
+    --PartyMemberFrame4HealthBar:SetStatusBarTexture(texture)
+    --PartyMemberFrame4ManaBar:SetStatusBarTexture(texture)
+    --MainMenuExpBar:SetStatusBarTexture(texture)
     CastingBarFrame:SetStatusBarTexture(texture)
-    MirrorTimer1StatusBar:SetStatusBarTexture(texture)
-    MirrorTimer2StatusBar:SetStatusBarTexture(texture)
-    MirrorTimer3StatusBar:SetStatusBarTexture(texture)
+    --MirrorTimer1StatusBar:SetStatusBarTexture(texture)
+    --MirrorTimer2StatusBar:SetStatusBarTexture(texture)
+    --MirrorTimer3StatusBar:SetStatusBarTexture(texture)
 end
 
 -- Auto repair on vendor visits
@@ -239,8 +260,7 @@ local function RegisterAutoRepairEvents()
                 local repairAllCost, canRepair = GetRepairAllCost()
                 if canRepair then
                     if repairAllCost <= GetMoney() then
-                        local repairFromGuild = IsInGuild() and CanGuildBankRepair() and BDUI_GlobalSettings.UseGuildRepair
-                        RepairAllItems(repairFromGuild)
+                        RepairAllItems()
                         DEFAULT_CHAT_FRAME:AddMessage("Your items have been repaired ("..GetCoinText(repairAllCost, ", ")..").", 255, 255, 0)
                     else
                         DEFAULT_CHAT_FRAME:AddMessage("Tried to auto-repair, but you don't have enough gold.", 255, 0, 0)
@@ -468,18 +488,19 @@ local function RegisterMiddleBars()
         --bar:SetBackdrop({bgFile = [[Interface\DialogFrame\UI-DialogBox-Background-Dark]]})
         bar:SetStatusBarTexture("Interface\\AddOns\\"..ADDON_NAME.."\\bar_textures\\Cupence")
         bar:SetOrientation("HORIZONTAL")
-        bar:SetBackdropColor(0, 0, 0, 0.7)
+        bar:SetBackdropColor(0, 0, 0, 1)
     end
 
     MiddleHealthBar:SetPoint("CENTER", 0, -190)
     MiddleHealthBar:SetSize(180, 15)
     MiddleHealthBar:GetStatusBarTexture():SetVertexColor(0, 255/255, 0)
     MiddleHealthBar:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background",
-                                 edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+                                 --edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
                                  tile = true, tileSize = 16, edgeSize = 16,
                                  insets = {left = -2, right = -2, top = -2, bottom = -15}})
     MiddleHealthBar:SetBackdropColor(0, 0, 0, 1);
     MiddleHealthBar:SetBackdropBorderColor(0, 0, 0, 1);
+
 
     MiddleHealthBar.Text = MiddleHealthBar:CreateFontString(nil, "OVERLAY")
     MiddleHealthBar.Text:SetFont(STANDARD_TEXT_FONT, 11, "OUTLINE")
@@ -554,7 +575,14 @@ local function RegisterMiddleBars()
     end)
 
     local function UpdateHealthText()
-        local healthPercentage = string.format("%d", (UnitHealth("player") / UnitHealthMax("player")) * 100)
+        local healthPercentage = (UnitHealth("player") / UnitHealthMax("player")) * 100
+        if healthPercentage <= 20 then
+            MiddleHealthBar:GetStatusBarTexture():SetVertexColor(230/255, 230/255, 230/255)
+        else
+            MiddleHealthBar:GetStatusBarTexture():SetVertexColor(0, 255/255, 0)
+        end
+
+        healthPercentage = string.format("%d", healthPercentage)
         MiddleHealthBar.Text:SetText(healthPercentage.."%")
     end
     MiddleHealthBar:SetScript("OnValueChanged",  UpdateHealthText)
@@ -572,8 +600,29 @@ local function RegisterMiddleBars()
     end)
 
     local function UpdatePowerText()
-        local powerPercentage = string.format("%d", (UnitPower("player") / UnitPowerMax("player")) * 100)
-        MiddlePowerBar.Text:SetText(powerPercentage.."%")
+        local powerText
+
+        if playerClass == "WARRIOR" or playerClass == "ROGUE" then
+            powerText = string.format("%s", UnitPower("player"))
+        elseif playerClass == "DRUID" then
+            for i = 1, GetNumShapeshiftForms() do
+                local _, active, _, spellId = GetShapeshiftFormInfo(i)
+                if active then
+                    if spellId == 768 then powerText = string.format("%s", UnitPower("player"))
+                    elseif spellId == 5487 or spellId == 9634 then powerText = string.format("%s", UnitPower("player"))
+                    else powerText = string.format("%d", (UnitPower("player") / UnitPowerMax("player")) * 100).."%"
+                    end
+                end
+
+                if not powerText then
+                    powerText = string.format("%d", (UnitPower("player") / UnitPowerMax("player")) * 100).."%"
+                end
+            end
+        else
+            powerText = string.format("%d", (UnitPower("player") / UnitPowerMax("player")) * 100).."%"
+        end
+
+        MiddlePowerBar.Text:SetText(powerText)
     end
     MiddlePowerBar:SetScript("OnValueChanged",  UpdatePowerText)
     MiddlePowerBar:SetScript("OnMinMaxChanged", UpdatePowerText)
@@ -585,7 +634,7 @@ end
 local function RegisterQuestAutomation()
     local function QuestRequiresCurrency()
         for i = 1, 6 do
-            local progItem = _G["QuestProgressItem" ..i] or nil
+            local progItem = _G["QuestProgressItem"..i] or nil
             if progItem and progItem:IsShown() and progItem.type == "required" then
                 if progItem.objectType == "currency" then
                     return true
@@ -617,7 +666,7 @@ local function RegisterQuestAutomation()
         if IsShiftKeyDown() then return end
 
         if event == "QUEST_DETAIL" then
-            if QuestGetAutoAccept() then
+            if QuestGetAutoAccept and QuestGetAutoAccept() then
                 CloseQuest()
             else
                 AcceptQuest()
@@ -710,11 +759,11 @@ local function RegisterEnemyStatusDisplay()
         CustomTargetStatusText[v]:SetShadowOffset(1, -1)
     end
     CustomTargetStatusText.HMiddle:SetPoint("CENTER", TargetFrame, -50, 3)
-    CustomTargetStatusText.HLeft:SetPoint("CENTER", TargetFrame, -93, 3)
-    CustomTargetStatusText.HRight:SetPoint("CENTER", TargetFrame, -4, 3)
+    CustomTargetStatusText.HLeft:SetPoint("LEFT", TargetFrame, 7, 3)
+    CustomTargetStatusText.HRight:SetPoint("RIGHT", TargetFrame, -110, 3)
     CustomTargetStatusText.MMiddle:SetPoint("CENTER", TargetFrame, -50, -8)
-    CustomTargetStatusText.MLeft:SetPoint("CENTER", TargetFrame, -93, -8)
-    CustomTargetStatusText.MRight:SetPoint("CENTER", TargetFrame, -4, -8)
+    CustomTargetStatusText.MLeft:SetPoint("LEFT", TargetFrame, 7, -8)
+    CustomTargetStatusText.MRight:SetPoint("RIGHT", TargetFrame, -110, -8)
 
     local function UpdateEnemyStatus(self, event)
         if event == "PLAYER_TARGET_CHANGED" or event == "UNIT_HEALTH" or event == "UNIT_MAXHEALTH" or event == "UNIT_HEALTH_FREQUENT" then
@@ -785,6 +834,8 @@ local function DarkenArt()
     }) do
         v:SetVertexColor(.12, .12, .12)
     end
+    MinimapBorderTop:Hide()
+    MiniMapWorldMapButton:Hide()
 
     for i, v in pairs({select(2, TimeManagerClockButton:GetRegions())}) do
         v:SetVertexColor(1, 1, 1)
@@ -793,6 +844,53 @@ local function DarkenArt()
     for i, v in pairs({MainMenuBarLeftEndCap, MainMenuBarRightEndCap}) do
         v:SetVertexColor(.1, .1, .1)
     end
+end
+
+local function RegisterFastLooting()
+    local tDelay = 0
+
+    -- Fast loot function
+    local function Handler()
+        if GetTime() - tDelay >= 0.3 then
+            tDelay = GetTime()
+            if GetCVarBool("autoLootDefault") ~= IsModifiedClick("AUTOLOOTTOGGLE") then
+                for i = GetNumLootItems(), 1, -1 do
+                    LootSlot(i)
+                end
+                tDelay = GetTime()
+            end
+        end
+    end
+
+    -- event frame
+    local f = CreateFrame("Frame")
+    f:RegisterEvent("LOOT_READY")
+    f:SetScript("OnEvent", Handler)
+end
+
+local function FixNameplateVisual()
+    local function Handler()
+        for key, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+            nameplate.UnitFrame.healthBar.border:Hide()
+            nameplate.UnitFrame.LevelFrame:SetPoint("RIGHT", nameplate, -5, 0)
+            nameplate.UnitFrame.LevelFrame.levelText:SetPoint("BOTTOM", 0, 1)
+            nameplate.UnitFrame.LevelFrame.levelText:SetFont(STANDARD_TEXT_FONT, 7, "OUTLINE")
+            --nameplate.UnitFrame.healthBar:SetPoint("TOP", nameplate, 0, -16)
+            nameplate.UnitFrame.healthBar:SetHeight(5)
+            nameplate.UnitFrame.healthBar:SetStatusBarTexture("Interface\\AddOns\\"..ADDON_NAME.."\\bar_textures\\Cupence")
+            nameplate.UnitFrame.healthBar:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+                                                       tile = true, tileSize = 16, edgeSize = 16,
+                                                       insets = {left = -1, right = -1, top = -1, bottom = -1}})
+            nameplate.UnitFrame.healthBar:SetBackdropColor(0, 0, 0, 1);
+            nameplate.UnitFrame.healthBar:SetBackdropBorderColor(0, 0, 0, 1);
+            nameplate.UnitFrame.name:SetPoint("TOP", 0, -18)
+            nameplate.UnitFrame.name:SetFont(STANDARD_TEXT_FONT, 8, "OUTLINE")
+        end
+    end
+
+    local f = CreateFrame("Frame")
+    f:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+    f:SetScript("OnEvent", Handler)
 end
 
 -----------------------------------------------------------------------------
@@ -820,7 +918,6 @@ function CreateOptionsPanel()
     local OptionsPanelSubTitle = OptionsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     local OptionsPanelQOLTitle = OptionsPanel:CreateFontString(nil, "ARTWORK", "GameFontNormalLeft")
     local AutoRepairCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelAutoRepair", OptionsPanel, "OptionsCheckButtonTemplate")
-    local UseGuildRepairCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelUseGuildRepair", OptionsPanel, "OptionsCheckButtonTemplate")
     local VendorGreysCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelVendorGreys", OptionsPanel, "OptionsCheckButtonTemplate")
     local AutomateQuestingCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelAutomateQuesting", OptionsPanel, "OptionsCheckButtonTemplate")
     local OptionsPanelUFTitle = OptionsPanel:CreateFontString(nil, "ARTWORK", "GameFontNormalLeft")
@@ -845,23 +942,11 @@ function CreateOptionsPanel()
     AutoRepairCheckbox:SetPoint("TOPLEFT", OptionsPanelQOLTitle, "BOTTOMLEFT", 0, -16)
     AutoRepairCheckbox:SetScript("OnClick", function(self)
         BDUI_GlobalSettings.AutoRepair = self:GetChecked()
-        if self:GetChecked() then
-            UseGuildRepairCheckbox:Enable()
-        else
-            UseGuildRepairCheckbox:Disable()
-        end
-    end)
-
-    _G[ADDON_NAME.."OptionsPanelUseGuildRepairText"]:SetText("Prioritize guild funds to auto repair with")
-    UseGuildRepairCheckbox:SetChecked(BDUI_GlobalSettings.UseGuildRepair)
-    UseGuildRepairCheckbox:SetPoint("TOPLEFT", AutoRepairCheckbox, "BOTTOMLEFT", 21, 1)
-    UseGuildRepairCheckbox:SetScript("OnClick", function(self)
-        BDUI_GlobalSettings.UseGuildRepair = self:GetChecked()
     end)
 
     _G[ADDON_NAME.."OptionsPanelVendorGreysText"]:SetText("Automatically vendor grey items")
     VendorGreysCheckbox:SetChecked(BDUI_GlobalSettings.VendorGreys)
-    VendorGreysCheckbox:SetPoint("TOPLEFT", AutoRepairCheckbox, "BOTTOMLEFT", 0, -24)
+    VendorGreysCheckbox:SetPoint("TOPLEFT", AutoRepairCheckbox, "BOTTOMLEFT", 0, 0)
     VendorGreysCheckbox:SetScript("OnClick", function(self)
         BDUI_GlobalSettings.VendorGreys = self:GetChecked()
     end)
@@ -928,7 +1013,9 @@ function CreateOptionsPanel()
         end
 
         CreateMenuItem("Top", "TOP")
-        CreateMenuItem("Middle", "MID")
+        CreateMenuItem("Centered", "MID")
+        CreateMenuItem("Centered 2", "MIDTWO")
+        CreateMenuItem("Default (requires reload on change)", "DEFAULT")
     end)
     UIDropDownMenu_SetSelectedValue(FramePositionDropdown, BDUI_CharacterSettings.FramePosition)
 
@@ -945,6 +1032,7 @@ local function Init(self, event)
         CreateOptionsPanel()
     elseif event == "PLAYER_LOGIN" then
         FixCastingBarVisual()
+        FixNameplateVisual()
         MoveAndScaleFrames()
         HideHitIndicators()
         SetBarTextures()
@@ -957,6 +1045,7 @@ local function Init(self, event)
         RegisterEnemyStatusDisplay()
         RegisterQuestAutomation()
         DarkenArt()
+        RegisterFastLooting()
 
         DEFAULT_CHAT_FRAME:AddMessage(ADDON_NAME.." loaded")
     end
@@ -977,6 +1066,7 @@ SlashCmdList["BDUI_HELP"] = function(message, editbox)
         BDUI_GlobalSettings    = GLOBAL_DEFAULTS
         BDUI_CharacterSettings = CHARACTER_DEFAULTS
         MoveAndScaleFrames()
+        ToggleMiddleBars()
         DEFAULT_CHAT_FRAME:AddMessage(ADDON_NAME.." settings have been reset to their defaults", 255, 255, 0)
     elseif message == "status" then
         DEFAULT_CHAT_FRAME:AddMessage(ADDON_NAME.." settings:", 255, 255, 0)
