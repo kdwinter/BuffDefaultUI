@@ -35,6 +35,7 @@ local GLOBAL_DEFAULTS = {
     ClassIconPortrait = true,
     HideGryphons      = false,
     AddMiddleBars     = true,
+    DarkenFrameArt    = true,
 }
 
 local CHARACTER_DEFAULTS = {
@@ -956,6 +957,7 @@ function CreateOptionsPanel()
     local VendorGreysCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelVendorGreys", OptionsPanel, "OptionsCheckButtonTemplate")
     local AutomateQuestingCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelAutomateQuesting", OptionsPanel, "OptionsCheckButtonTemplate")
     local OptionsPanelUFTitle = OptionsPanel:CreateFontString(nil, "ARTWORK", "GameFontNormalLeft")
+    local DarkenArtCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelDarkenArt", OptionsPanel, "OptionsCheckButtonTemplate")
     local ClassColorHealthCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelClassColorHealth", OptionsPanel, "OptionsCheckButtonTemplate")
     local ClassIconPortraitCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelClassIconPortrait", OptionsPanel, "OptionsCheckButtonTemplate")
     local AddMiddleBarsCheckbox = CreateFrame("CheckButton", ADDON_NAME.."OptionsPanelAddMiddleBars", OptionsPanel, "OptionsCheckButtonTemplate")
@@ -996,9 +998,16 @@ function CreateOptionsPanel()
     OptionsPanelUFTitle:SetText("|cffffffffFrames")
     OptionsPanelUFTitle:SetPoint("TOPLEFT", AutomateQuestingCheckbox, "BOTTOMLEFT", 0, -24)
 
+    _G[ADDON_NAME.."OptionsPanelDarkenArtText"]:SetText("Darken frame art (requires UI reload)")
+    DarkenArtCheckbox:SetChecked(BDUI_GlobalSettings.DarkenFrameArt)
+    DarkenArtCheckbox:SetPoint("TOPLEFT", OptionsPanelUFTitle, "BOTTOMLEFT", 0, -16)
+    DarkenArtCheckbox:SetScript("OnClick", function(self)
+        BDUI_GlobalSettings.DarkenFrameArt = self:GetChecked()
+    end)
+
     _G[ADDON_NAME.."OptionsPanelClassColorHealthText"]:SetText("Use class colors in healthbars")
     ClassColorHealthCheckbox:SetChecked(BDUI_GlobalSettings.ClassColorHealth)
-    ClassColorHealthCheckbox:SetPoint("TOPLEFT", OptionsPanelUFTitle, "BOTTOMLEFT", 0, -16)
+    ClassColorHealthCheckbox:SetPoint("TOPLEFT", DarkenArtCheckbox, "BOTTOMLEFT", 0, 0)
     ClassColorHealthCheckbox:SetScript("OnClick", function(self)
         BDUI_GlobalSettings.ClassColorHealth = self:GetChecked()
     end)
@@ -1050,7 +1059,7 @@ function CreateOptionsPanel()
         CreateMenuItem("Top", "TOP")
         CreateMenuItem("Centered", "MID")
         CreateMenuItem("Centered 2", "MIDTWO")
-        CreateMenuItem("Default (requires reload on change)", "DEFAULT")
+        CreateMenuItem("Default (requires UI reload)", "DEFAULT")
     end)
     UIDropDownMenu_SetSelectedValue(FramePositionDropdown, BDUI_CharacterSettings.FramePosition)
 
@@ -1079,7 +1088,9 @@ local function Init(self, event)
         RegisterMiddleBars()
         RegisterEnemyStatusDisplay()
         RegisterQuestAutomation()
-        --DarkenArt()
+        if BDUI_GlobalSettings.DarkenFrameArt then
+            DarkenArt()
+        end
         RegisterFastLooting()
 
         DEFAULT_CHAT_FRAME:AddMessage(ADDON_NAME.." loaded")
