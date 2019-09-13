@@ -84,7 +84,7 @@ local ENERGY_COLOR = {255/255, 245/255, 105/255}
 
 local function FixCastingBarVisual()
     -- Increase the default castbar size
-    CastingBarFrame:SetSize(180, 20)
+    CastingBarFrame:SetSize(180, 21)
 
     -- Fix text alignment for new size
     CastingBarFrame.Text:ClearAllPoints()
@@ -111,7 +111,7 @@ local function FixCastingBarVisual()
 
     CastingBarFrame:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background",
                                  tile = true, tileSize = 16, edgeSize = 16,
-                                 insets = {left = -2, right = -2, top = -2, bottom = -2}})
+                                 insets = {left = -1, right = -1, top = -1, bottom = -1}})
     CastingBarFrame:SetBackdropColor(0, 0, 0, 1);
     CastingBarFrame:SetBackdropBorderColor(0, 0, 0, 1);
 
@@ -436,24 +436,6 @@ local function RegisterChatImprovements()
     -- TODO: chat history support
 end
 
--- Show a notification when players enters and leaves combat
-local function RegisterCombatNotifications()
-    UIErrorsFrame:Show()
-
-    local function NotifyCombatChange(self, event)
-        if event == "PLAYER_REGEN_DISABLED" then
-            UIErrorsFrame:AddMessage("Entered combat", 0, 100, 255, 3)
-        elseif event == "PLAYER_REGEN_ENABLED" then
-            UIErrorsFrame:AddMessage("Left combat", 0, 100, 255, 3)
-        end
-    end
-
-    local f = CreateFrame("Frame")
-    f:RegisterEvent("PLAYER_REGEN_DISABLED")
-    f:RegisterEvent("PLAYER_REGEN_ENABLED")
-    f:SetScript("OnEvent", NotifyCombatChange)
-end
-
 local MiddleHealthBar = CreateFrame("StatusBar", nil, UIParent)
 local MiddlePowerBar  = CreateFrame("StatusBar", nil, UIParent)
 
@@ -492,12 +474,13 @@ local function RegisterMiddleBars()
     end
 
     MiddleHealthBar:SetPoint("CENTER", 0, -190)
+    MiddleHealthBar:SetAlpha(0.3)
     MiddleHealthBar:SetSize(180, 15)
     MiddleHealthBar:GetStatusBarTexture():SetVertexColor(0, 255/255, 0)
     MiddleHealthBar:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background",
                                  --edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
                                  tile = true, tileSize = 16, edgeSize = 16,
-                                 insets = {left = -2, right = -2, top = -2, bottom = -15}})
+                                 insets = {left = -1, right = -1, top = -1, bottom = -13}})
     MiddleHealthBar:SetBackdropColor(0, 0, 0, 1);
     MiddleHealthBar:SetBackdropBorderColor(0, 0, 0, 1);
 
@@ -542,8 +525,9 @@ local function RegisterMiddleBars()
 
         MiddlePowerBar:GetStatusBarTexture():SetVertexColor(unpack(color))
     end
-    MiddlePowerBar:SetPoint("CENTER", 0, -205)
-    MiddlePowerBar:SetSize(180, 11)
+    MiddlePowerBar:SetPoint("CENTER", 0, -204)
+    MiddlePowerBar:SetAlpha(0.3)
+    MiddlePowerBar:SetSize(180, 12)
     SetMiddlePowerBarColor()
 
     MiddlePowerBar.Text = MiddlePowerBar:CreateFontString(nil, "OVERLAY")
@@ -628,6 +612,28 @@ local function RegisterMiddleBars()
     MiddlePowerBar:SetScript("OnMinMaxChanged", UpdatePowerText)
 
     ToggleMiddleBars()
+end
+
+-- Show a notification when players enters and leaves combat
+local function RegisterCombatNotifications()
+    UIErrorsFrame:Show()
+
+    local function NotifyCombatChange(self, event)
+        if event == "PLAYER_REGEN_DISABLED" then
+            UIErrorsFrame:AddMessage("Entered combat", 0, 100, 255, 3)
+            MiddleHealthBar:SetAlpha(1.0)
+            MiddlePowerBar:SetAlpha(1.0)
+        elseif event == "PLAYER_REGEN_ENABLED" then
+            UIErrorsFrame:AddMessage("Left combat", 0, 100, 255, 3)
+            MiddleHealthBar:SetAlpha(0.3)
+            MiddlePowerBar:SetAlpha(0.3)
+        end
+    end
+
+    local f = CreateFrame("Frame")
+    f:RegisterEvent("PLAYER_REGEN_DISABLED")
+    f:RegisterEvent("PLAYER_REGEN_ENABLED")
+    f:SetScript("OnEvent", NotifyCombatChange)
 end
 
 -- Automatically accept/complete quests
@@ -883,8 +889,37 @@ local function FixNameplateVisual()
                                                        insets = {left = -1, right = -1, top = -1, bottom = -1}})
             nameplate.UnitFrame.healthBar:SetBackdropColor(0, 0, 0, 1);
             nameplate.UnitFrame.healthBar:SetBackdropBorderColor(0, 0, 0, 1);
+
             nameplate.UnitFrame.name:SetPoint("TOP", 0, -18)
             nameplate.UnitFrame.name:SetFont(STANDARD_TEXT_FONT, 8, "OUTLINE")
+
+            if BDUI_GlobalSettings.ClassColorHealth then
+                local unit = nameplate.UnitFrame.unit
+                local _, class, c
+                --if UnitIsPlayer(unit) and UnitIsConnected(unit) and unit == nameplate.UnitFrame.healthBar.unit and UnitClass(unit) then
+                if UnitIsPlayer(unit) and UnitIsConnected(unit) and UnitClass(unit) then
+                    _, class = UnitClass(unit)
+                    c = RAID_CLASS_COLORS[class]
+                    nameplate.UnitFrame.healthBar:SetStatusBarColor(c.r, c.g, c.b)
+                    nameplate.UnitFrame.healthBar:SetBackdropColor(255/255, 0/255, 0/255)
+                    nameplate.UnitFrame.healthBar:SetBackdropBorderColor(255/255, 0/255, 0/255)
+                else
+                    --print(tostring(UnitReaction(unit, "player")))
+                    local r = UnitReaction(unit, "player")
+                    if r == 2 or r == nil then -- red
+                        nameplate.UnitFrame.healthBar:SetStatusBarColor(255/255, 0/255, 0/255)
+                    elseif r == 4 then -- yellow
+                        nameplate.UnitFrame.healthBar:SetStatusBarColor(220/225, 220/255, 52/255)
+                    end
+                end
+            else
+                local r = UnitReaction(unit, "player")
+                if r == 2 or r == nil then -- red
+                    nameplate.UnitFrame.healthBar:SetStatusBarColor(255/255, 0/255, 0/255)
+                elseif r == 4 then -- yellow
+                    nameplate.UnitFrame.healthBar:SetStatusBarColor(220/225, 220/255, 52/255)
+                end
+            end
         end
     end
 
@@ -1044,7 +1079,7 @@ local function Init(self, event)
         RegisterMiddleBars()
         RegisterEnemyStatusDisplay()
         RegisterQuestAutomation()
-        DarkenArt()
+        --DarkenArt()
         RegisterFastLooting()
 
         DEFAULT_CHAT_FRAME:AddMessage(ADDON_NAME.." loaded")
